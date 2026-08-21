@@ -5,13 +5,17 @@ import { Member } from '../../libs/dto/member/member';
 import { LoginInput, MemberInput } from '../../libs/dto/member/member.input';
 import { MemberStatus } from '../../libs/enums/member.enum';
 import { Message } from '../../libs/enums/common.enum';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable()
 export class MemberService {
-	constructor(@InjectModel('Member') private readonly memberModel: Model<Member>) {}
+	constructor(
+		@InjectModel('Member') private readonly memberModel: Model<Member>,
+		private authservice: AuthService,
+	) {}
 
 	public async signup(input: MemberInput): Promise<Member> {
-		//TODO: Hash password
+		input.memberPassword = await this.authservice.hashPassword(input.memberPassword);
 
 		try {
 			const result = await this.memberModel.create(input);
@@ -39,7 +43,7 @@ export class MemberService {
 		}
 
 		//TODO: Compare passwords
-		const isMatch = memberPassword === response.memberPassword;
+		const isMatch = await this.authservice.comparePasswords(input.memberPassword, response.memberPassword);
 		if (!isMatch) throw new InternalServerErrorException(Message.WRONG_PASSWORD);
 
 		return response;
