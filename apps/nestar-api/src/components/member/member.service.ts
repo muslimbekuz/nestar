@@ -66,7 +66,7 @@ export class MemberService {
 				{ new: true },
 			)
 			.exec();
-		if (!result) throw new InternalServerErrorException(Message.UPLOAD_FAILED);
+		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
 
 		result.accessToken = await this.authservice.createToken(result);
 		return result;
@@ -108,17 +108,33 @@ export class MemberService {
 
 		const result = await this.memberModel
 			.aggregate([
-				{ $match: match },
-				{ $sort: sort },
+				{ $match: { memberType: MemberType.AGENT } },
 				{
 					$facet: {
-						list: [{ $skip: (input.page - 1) * input.limit }, { $limit: input.limit }],
+						list: [
+							{ $match: { memberStatus: MemberStatus.ACTIVE } },
+							{ $sort: sort },
+							{ $skip: (input.page - 1) * input.limit },
+							{ $limit: input.limit },
+						],
+						list2: [
+							{ $match: { memberStatus: MemberStatus.BLOCK } },
+							{ $sort: sort },
+							{ $skip: (input.page - 1) * input.limit },
+							{ $limit: input.limit },
+						],
+						list3: [
+							{ $match: { memberStatus: MemberStatus.DELETE } },
+							{ $sort: sort },
+							{ $skip: (input.page - 1) * input.limit },
+							{ $limit: input.limit },
+						],
 						metaCounter: [{ $count: 'total' }],
 					},
 				},
 			])
 			.exec();
-		if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
 		return result[0];
 	}
 
