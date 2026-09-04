@@ -15,7 +15,7 @@ import { ViewService } from '../view/view.service';
 import { PropertyStatus } from '../../libs/enums/property.enum';
 import { ViewGroup } from '../../libs/enums/view.enum';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
-import * as moment from 'moment';
+import moment = require('moment');
 import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 
 @Injectable()
