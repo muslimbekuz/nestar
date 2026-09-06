@@ -14,6 +14,7 @@ import { LikeInput } from '../../libs/dto/like/like.input';
 import { LikeGroup } from '../../libs/enums/like.enum';
 import { LikeService } from '../like/like.service';
 import { Follower, Following, MeFollowed } from '../../libs/dto/follow/follow';
+import { lookupAuthMemberLiked } from '../../libs/config';
 
 @Injectable()
 export class MemberService {
@@ -121,31 +122,16 @@ export class MemberService {
 
 		const result = await this.memberModel
 			.aggregate([
-				{ $match: { memberType: MemberType.AGENT } },
+				{ $match: match },
+				{ $sort: sort },
 				{
 					$facet: {
-						list: [
-							{ $match: { memberStatus: MemberStatus.ACTIVE } },
-							{ $sort: sort },
-							{ $skip: (input.page - 1) * input.limit },
-							{ $limit: input.limit },
-						],
-						list2: [
-							{ $match: { memberStatus: MemberStatus.BLOCK } },
-							{ $sort: sort },
-							{ $skip: (input.page - 1) * input.limit },
-							{ $limit: input.limit },
-						],
-						list3: [
-							{ $match: { memberStatus: MemberStatus.DELETE } },
-							{ $sort: sort },
-							{ $skip: (input.page - 1) * input.limit },
-							{ $limit: input.limit },
-						],
+						list: [{ $skip: (input.page - 1) * input.limit }, { $limit: input.limit }, lookupAuthMemberLiked(memberId)],
 						metaCounter: [{ $count: 'total' }],
 					},
 				},
 			])
+
 			.exec();
 
 		return result[0];
